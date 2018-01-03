@@ -8,7 +8,7 @@ RUN echo "http://mirrors.aliyun.com/alpine/v3.6/community/" >> /etc/apk/reposito
 
 # timezone
 RUN apk update
-RUN apk add --no-cache tzdata \
+RUN apk add --no-cache tzdata bash\
     && echo "Asia/Shanghai" > /etc/timezone \
     && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 

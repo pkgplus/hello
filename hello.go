@@ -31,5 +31,6 @@ func getIPAdress(r *http.Request) string {
 	if ipAddress == "" {
 		ipAddress = r.RemoteAddr
 	}
+	log.Printf("get request from %s", ipAddress);
 	return ipAddress
 }
