@@ -1,30 +1,49 @@
-FROM golang:1.8.3-alpine3.6
+FROM golang:1.13.1-alpine3.10 as build-env
 MAINTAINER Xue Bing <xuebing1110@gmail.com>
 
 # repo
 RUN cp /etc/apk/repositories /etc/apk/repositories.bak
-RUN echo "http://mirrors.aliyun.com/alpine/v3.6/main/" > /etc/apk/repositories
-RUN echo "http://mirrors.aliyun.com/alpine/v3.6/community/" >> /etc/apk/repositories
+RUN echo "http://mirrors.aliyun.com/alpine/v3.10/main/" > /etc/apk/repositories
+RUN echo "http://mirrors.aliyun.com/alpine/v3.10/community/" >> /etc/apk/repositories
+
+# aok repo
+RUN apk update
+RUN apk add --no-cache git
+
+# go mod
+ENV GOPROXY=https://goproxy.cn
+COPY go.mod .
+COPY go.sum .
+RUN go mod download
+
+# build
+COPY . .
+RUN go build -o /app/hello hello.go
+
+
+## docker image stage
+FROM alpine:3.10
+MAINTAINER Xue Bing <xuebing.it@haier.com>
+
+# repo
+RUN cp /etc/apk/repositories /etc/apk/repositories.bak
+RUN echo "http://mirrors.aliyun.com/alpine/v3.10/main/" > /etc/apk/repositories
+RUN echo "http://mirrors.aliyun.com/alpine/v3.10/community/" >> /etc/apk/repositories
 
 # timezone
 RUN apk update
-RUN apk add --no-cache tzdata bash\
+RUN apk add --no-cache tzdata bash curl \
     && echo "Asia/Shanghai" > /etc/timezone \
     && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
-# Add Tini
-RUN apk add --no-cache tini
-ENTRYPOINT ["/sbin/tini", "--"]
+## Add Tini
+#RUN apk add --no-cache tini
+#ENTRYPOINT ["/sbin/tini", "--"]
 
-# move to GOPATH
-RUN mkdir -p /go/src/github.com/xuebing1110/hello
-COPY . $GOPATH/src/github.com/xuebing1110/hello/
-WORKDIR $GOPATH/src/github.com/xuebing1110/hello
-
-# build
-RUN mkdir -p /app
-RUN go build -o /app/hello ./hello.go
+# cmd
+COPY --from=build-env /app /app
 
 EXPOSE 8080
 WORKDIR /app
 CMD ["/app/hello"]
+
