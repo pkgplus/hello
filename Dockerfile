@@ -10,6 +10,10 @@ RUN echo "http://mirrors.aliyun.com/alpine/v3.10/community/" >> /etc/apk/reposit
 RUN apk update
 RUN apk add --no-cache git
 
+# mkdir /app
+RUN mkdir -p /app
+WORKDIR /app
+
 # go mod
 ENV GOPROXY=https://goproxy.cn
 COPY go.mod .
